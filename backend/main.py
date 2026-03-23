@@ -19,7 +19,15 @@ except ModuleNotFoundError:
 
 def run_pipeline(symbol):
 
+    symbol = symbol.strip()
+    if not symbol:
+        raise ValueError("Please enter a stock symbol like RELIANCE.NS")
+
     data = fetch_stock(symbol)
+    if data.empty:
+        raise ValueError(
+            f"No market data found for '{symbol}'. Use a Yahoo Finance ticker, e.g. RELIANCE.NS"
+        )
 
     rsi = compute_rsi(data)
     ma = moving_average(data)

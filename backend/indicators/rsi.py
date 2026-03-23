@@ -1,4 +1,7 @@
 def compute_rsi(data, window=14):
+    if data.empty or 'Close' not in data:
+        raise ValueError("Cannot compute RSI: missing Close price data")
+
     delta = data['Close'].diff()
 
     gain = (delta.where(delta > 0, 0)).rolling(window).mean()
@@ -7,4 +10,8 @@ def compute_rsi(data, window=14):
     rs = gain / loss
     rsi = 100 - (100 / (1 + rs))
 
-    return rsi.iloc[-1]
+    rsi = rsi.dropna()
+    if rsi.empty:
+        raise ValueError("Not enough price history to compute RSI")
+
+    return float(rsi.iloc[-1])
