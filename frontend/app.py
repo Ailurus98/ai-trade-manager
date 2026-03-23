@@ -16,6 +16,45 @@ from backend.utils.search import search_stock
 def analyze_stock(symbol):
 	return run_pipeline(symbol)
 
+
+def build_chart_data(raw_data):
+	if not isinstance(raw_data, pd.DataFrame) or raw_data.empty:
+		return pd.DataFrame(columns=["Close", "MA20"])
+
+	df = raw_data.copy()
+
+	# Handle yfinance variants where Close can resolve to a Series or a DataFrame.
+	close_obj = None
+	if "Close" in df.columns:
+		close_obj = df["Close"]
+	else:
+		# Case-insensitive fallback for unexpected column casing.
+		for col in df.columns:
+			if str(col).lower() == "close":
+				close_obj = df[col]
+				break
+
+	if close_obj is None:
+		return pd.DataFrame(columns=["Close", "MA20"])
+
+	if isinstance(close_obj, pd.DataFrame):
+		close_series = None
+		for idx in range(close_obj.shape[1]):
+			candidate = pd.to_numeric(close_obj.iloc[:, idx], errors="coerce")
+			if candidate.notna().any():
+				close_series = candidate
+				break
+		if close_series is None:
+			return pd.DataFrame(columns=["Close", "MA20"])
+	else:
+		close_series = pd.to_numeric(close_obj, errors="coerce")
+
+	chart_df = pd.DataFrame({"Close": close_series})
+	chart_df["MA20"] = chart_df["Close"].rolling(window=5, min_periods=1).mean()
+	chart_df = chart_df.dropna(subset=["Close"]).reset_index(drop=True)
+
+	return chart_df
+
 st.title("📈 AI Trade Manager (Indian Market)")
 st.caption("AI-powered stock analysis system for Indian markets 🇮🇳")
 
@@ -62,30 +101,12 @@ if query:
 				st.subheader("🧠 AI Insight")
 				st.info(result["reason"])
 
-				if "data" in result and "Close" in result["data"]:
-					df = result["data"].copy()
-
-					# Fix 1: Ensure index is datetime
-					df.index = pd.to_datetime(df.index)
-
-					# Fix 2: Keep only required columns
-					df = df[["Close"]]
-
-					# Fix 3: Add Moving Average (safer window for short histories)
-					df["MA20"] = df["Close"].rolling(window=5).mean()
-
-					# Fix 4: Remove NaN values
-					df = df.dropna()
-
-					st.subheader("📊 Price Trend with Moving Average")
-
-					# Fix 5: Check if data exists
-					if df.empty:
-						st.error("No chart data available")
-					else:
-						st.line_chart(df)
+				st.subheader("📊 Price Trend with Moving Average")
+				chart_df = build_chart_data(result.get("data"))
+				if chart_df.empty:
+					st.error("No chart data available")
 				else:
-					st.warning("Price chart data is unavailable in this run. Please click Analyze again.")
+					st.line_chart(chart_df[["Close", "MA20"]])
 			except ValueError as err:
 				analyze_stock.clear()
 				st.warning(str(err))
