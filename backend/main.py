@@ -29,17 +29,22 @@ def run_pipeline(symbol):
             f"No market data found for '{symbol}'. Use a Yahoo Finance ticker, e.g. RELIANCE.NS"
         )
 
-    rsi = compute_rsi(data)
-    ma = moving_average(data)
-
     try:
-        news = fetch_news(symbol)
-    except Exception:
-        news = []
-    sentiment = get_sentiment(news)
+        rsi = compute_rsi(data)
+        ma = moving_average(data)
 
-    decision, confidence = make_decision(rsi, sentiment)
-    reason = generate_reason(rsi, sentiment, decision)
+        try:
+            news = fetch_news(symbol)
+        except Exception:
+            news = []
+        sentiment = get_sentiment(news)
+
+        decision, confidence = make_decision(rsi, sentiment)
+        reason = generate_reason(rsi, sentiment, decision)
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise ValueError("Analysis temporarily unavailable. Please try again in a minute.") from exc
 
     return {
         "symbol": symbol,

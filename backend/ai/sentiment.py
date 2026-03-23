@@ -8,8 +8,20 @@ def get_sentiment(news_list):
     scores = []
 
     for news in news_list:
-        score = TextBlob(news).sentiment.polarity
-        scores.append(score)
+        if news is None:
+            continue
+
+        try:
+            text = str(news).strip()
+            if not text:
+                continue
+            score = TextBlob(text).sentiment.polarity
+            scores.append(score)
+        except Exception:
+            continue
+
+    if not scores:
+        return "Neutral"
 
     avg = sum(scores) / len(scores)
 

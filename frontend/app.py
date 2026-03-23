@@ -71,8 +71,11 @@ if query:
 				else:
 					st.warning("Price chart data is unavailable in this run. Please click Analyze again.")
 			except ValueError as err:
+				analyze_stock.clear()
 				st.warning(str(err))
-			except Exception:
+			except Exception as err:
+				analyze_stock.clear()
 				st.error("We could not analyze this stock right now. Please try again in a minute.")
+				st.caption(f"Debug: {type(err).__name__}")
 	else:
 		st.warning("No matching stocks found")
