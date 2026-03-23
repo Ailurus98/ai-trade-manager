@@ -63,27 +63,27 @@ if query:
 				st.info(result["reason"])
 
 				if "data" in result and "Close" in result["data"]:
-					try:
-						df = result["data"].copy()
+					df = result["data"].copy()
 
-						close_data = df["Close"]
-						if isinstance(close_data, pd.DataFrame):
-							# yfinance may return duplicate/multi-level Close columns; use the first valid series.
-							close_data = close_data.iloc[:, 0]
+					# Fix 1: Ensure index is datetime
+					df.index = pd.to_datetime(df.index)
 
-						chart_df = pd.DataFrame()
-						chart_df["Close"] = pd.to_numeric(close_data, errors="coerce")
-						chart_df["MA20"] = chart_df["Close"].rolling(20, min_periods=1).mean()
-						chart_df = chart_df.dropna(subset=["Close"]).reset_index(drop=True)
+					# Fix 2: Keep only required columns
+					df = df[["Close"]]
 
-						st.subheader("📊 Price Trend with Moving Average")
-						if chart_df.empty:
-							st.warning("Price chart data is unavailable right now.")
-						else:
-							st.line_chart(chart_df[["Close", "MA20"]])
-					except Exception as chart_err:
-						st.warning("Could not render chart for this stock right now.")
-						st.caption(f"Chart Debug: {type(chart_err).__name__}")
+					# Fix 3: Add Moving Average (safer window for short histories)
+					df["MA20"] = df["Close"].rolling(window=5).mean()
+
+					# Fix 4: Remove NaN values
+					df = df.dropna()
+
+					st.subheader("📊 Price Trend with Moving Average")
+
+					# Fix 5: Check if data exists
+					if df.empty:
+						st.error("No chart data available")
+					else:
+						st.line_chart(df)
 				else:
 					st.warning("Price chart data is unavailable in this run. Please click Analyze again.")
 			except ValueError as err:
