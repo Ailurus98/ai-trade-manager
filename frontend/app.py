@@ -63,11 +63,21 @@ if query:
 				st.info(result["reason"])
 
 				if "data" in result and "Close" in result["data"]:
-					df = result["data"].copy()
-					df["MA20"] = df["Close"].rolling(20).mean()
+					try:
+						df = result["data"].copy()
+						chart_df = pd.DataFrame()
+						chart_df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
+						chart_df["MA20"] = chart_df["Close"].rolling(20, min_periods=1).mean()
+						chart_df = chart_df.dropna(subset=["Close"]).reset_index(drop=True)
 
-					st.subheader("📊 Price Trend with Moving Average")
-					st.line_chart(df[["Close", "MA20"]])
+						st.subheader("📊 Price Trend with Moving Average")
+						if chart_df.empty:
+							st.warning("Price chart data is unavailable right now.")
+						else:
+							st.line_chart(chart_df[["Close", "MA20"]])
+					except Exception as chart_err:
+						st.warning("Could not render chart for this stock right now.")
+						st.caption(f"Chart Debug: {type(chart_err).__name__}")
 				else:
 					st.warning("Price chart data is unavailable in this run. Please click Analyze again.")
 			except ValueError as err:
@@ -76,6 +86,6 @@ if query:
 			except Exception as err:
 				analyze_stock.clear()
 				st.error("We could not analyze this stock right now. Please try again in a minute.")
-				st.caption(f"Debug: {type(err).__name__}")
+				st.caption(f"Debug: {type(err).__name__}: {err}")
 	else:
 		st.warning("No matching stocks found")
