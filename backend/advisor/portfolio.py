@@ -1,11 +1,7 @@
 """Portfolio analysis module — diversification, sector analysis, index comparison."""
 
-try:
-    from backend.collector.stock_data import fetch_fundamentals, fetch_stock
-    from backend.utils.stocks import STOCKS
-except ModuleNotFoundError:
-    from collector.stock_data import fetch_fundamentals, fetch_stock
-    from utils.stocks import STOCKS
+from backend.collector.stock_data import fetch_fundamentals, fetch_stock
+from backend.utils.stocks import STOCKS
 
 
 # Broad sector groupings for diversification check
