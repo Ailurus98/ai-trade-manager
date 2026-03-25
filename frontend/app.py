@@ -295,8 +295,8 @@ def render_range_bar(label, low, high, current):
 
 
 if app_mode == "Stock Analysis":
-    st.title("AI Stock Analysis")
-    st.caption("Comprehensive analysis of 200+ NSE Indian Stocks")
+    st.title("AccleWealth")
+    st.caption("Comprehensive analysis of NSE Indian Stocks")
     
     render_ticker_tape()
 
