@@ -357,8 +357,29 @@ def build_financial_bar_chart(years, values, title, color):
     df = df.dropna()
     if df.empty:
         return None
+        
+    max_val = df["Value"].abs().max()
+    scale = 1
+    suffix = ""
     
-    fig = px.bar(df, x="Year", y="Value", title=title, color_discrete_sequence=[color])
+    if max_val >= 10_000_000:
+        scale = 10_000_000
+        suffix = " Cr"
+    elif max_val >= 100_000:
+        scale = 100_000
+        suffix = " L"
+
+    if scale > 1:
+        df["Value_Scaled"] = df["Value"] / scale
+        y_axis = "Value_Scaled"
+        full_title = f"{title} (in{suffix})"
+        labels = {"Value_Scaled": f"Amount ({suffix.strip()})"}
+    else:
+        y_axis = "Value"
+        full_title = title
+        labels = {"Value": "Amount"}
+    
+    fig = px.bar(df, x="Year", y=y_axis, title=full_title, color_discrete_sequence=[color], labels=labels)
     fig.update_layout(
         height=300, margin=dict(l=20, r=20, t=40, b=20),
         plot_bgcolor="#0d1117", paper_bgcolor="#0d1117", font_color="#c9d1d9"
