@@ -31,13 +31,15 @@ st.set_page_config(page_title="AccelWealth", layout="wide")
 # Custom CSS styling (animations, typography, layout) - strictly NO EMOJIS
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap');
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(15px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 .fade-in { animation: fadeIn 0.8s ease-in-out; }
@@ -46,6 +48,10 @@ st.markdown("""
 /* Custom Font mapping for clean look */
 html, body, [class*="css"] {
     font-family: 'Inter', -apple-system, system-ui, sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif !important;
+    letter-spacing: -0.5px;
 }
 
 /* Apple Liquid Glass Styling */
@@ -364,8 +370,12 @@ def render_range_bar(label, low, high, current):
 
 
 if app_mode == "Stock Analysis":
-    st.title("AccelWealth")
-    st.caption("Comprehensive analysis of NSE Indian Stocks")
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 25px; animation: slideUp 0.8s ease-out;">
+        <h1 style="font-size: 3.5rem; font-weight: 800; background: -webkit-linear-gradient(-45deg, #58a6ff 0%, #8b949e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0px; padding-bottom: 10px;">AccelWealth Analysis</h1>
+        <p style="color: #8b949e; font-size: 1.1rem; font-weight: 400; margin-top: -10px;">Comprehensive AI-driven insights for NSE Indian Stocks</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     render_ticker_tape()
 
@@ -521,8 +531,12 @@ if app_mode == "Stock Analysis":
         st.markdown("<div class='glass-panel' style='text-align: center;'><h3>Welcome to AccleWealth Stock Analysis</h3><p>Search for a stock above to view detailed AI-driven insights, financials, and news.</p></div>", unsafe_allow_html=True)
 
 elif app_mode == "AccelWealth (Portfolio)":
-    st.title("AccelWealth")
-    st.caption("Disciplined investing through automation, risk control, and behavioral guardrails.")
+    st.markdown("""
+    <div style="text-align: center; margin-top: 20px; margin-bottom: 40px; animation: slideUp 0.8s ease-out;">
+        <h1 style="font-size: 4.5rem; font-weight: 800; background: -webkit-linear-gradient(45deg, #00C9FF 0%, #92FE9D 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0; padding-bottom: 5px; line-height: 1.1;">AccelWealth</h1>
+        <p style="color: #c9d1d9; font-size: 1.25rem; font-family: 'Inter', sans-serif; font-weight: 400; letter-spacing: 0.2px; margin-top: 5px;">Disciplined investing through automation, risk control, and behavioral guardrails.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     if "portfolio" not in st.session_state:
         st.session_state.portfolio = [
