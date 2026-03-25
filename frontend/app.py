@@ -21,9 +21,11 @@ from backend.utils.search import search_stock
 from backend.utils.stocks import INDEX_FUNDS, STOCKS
 from backend.collector.stock_data import fetch_index_quotes
 from backend.advisor.portfolio import analyze_portfolio
+from backend.advisor.accel_wealth import calculate_allocation, evaluate_position_sizing, evaluate_risk_control, evaluate_exit_strategy
+from backend.collector.filters import filter_nifty200
 
 # Page Config
-st.set_page_config(page_title="Acclewealth", layout="wide")
+st.set_page_config(page_title="AccelWealth", layout="wide")
 
 
 # Custom CSS styling (animations, typography, layout) - strictly NO EMOJIS
@@ -46,6 +48,43 @@ html, body, [class*="css"] {
     font-family: 'Inter', -apple-system, system-ui, sans-serif;
 }
 
+/* Apple Liquid Glass Styling */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    color: #f0f6fc;
+}
+
+.glass-success {
+    background: rgba(50, 205, 50, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(50, 205, 50, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: #a8f0b3;
+    font-weight: 500;
+}
+
+.glass-warning {
+    background: rgba(255, 69, 0, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 69, 0, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: #ffb3a8;
+    font-weight: 500;
+}
+
 /* Range Bar Styles */
 .range-container {
     width: 100%;
@@ -62,9 +101,10 @@ html, body, [class*="css"] {
 .range-bar-bg {
     width: 100%;
     height: 6px;
-    background-color: #30363d;
+    background-color: rgba(255,255,255,0.1);
     border-radius: 3px;
     position: relative;
+    backdrop-filter: blur(4px);
 }
 .range-indicator {
     position: absolute;
@@ -74,28 +114,32 @@ html, body, [class*="css"] {
     border-radius: 50%;
     top: -3px;
     transform: translateX(-50%);
-    box-shadow: 0 0 6px #58a6ff;
+    box-shadow: 0 0 8px #58a6ff;
 }
 
 /* Card Styles */
 .info-card {
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
-    transition: transform 0.2s;
+    transition: transform 0.2s, background 0.2s;
 }
 .info-card:hover {
-    border-color: #8b949e;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Clean up Streamlit elements */
 .stMetric {
-    background: #161b22;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
     padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #30363d;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -202,8 +246,15 @@ def render_ticker_tape():
 
 
 # Sidebar Navigation
-st.sidebar.title("Acclewealth")
-app_mode = st.sidebar.radio("Navigation", ["Stock Analysis", "Portfolio Dashboard"])
+st.sidebar.title("AccelWealth")
+app_mode = st.sidebar.radio("Navigation", ["Stock Analysis", "AccelWealth (Portfolio)"])
+
+if st.sidebar.button("Reset Engine Profile", type="secondary"):
+    if "onboarding_done" in st.session_state:
+        st.session_state.onboarding_done = False
+    if "portfolio" in st.session_state:
+        st.session_state.portfolio = []
+    st.rerun()
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -295,7 +346,7 @@ def render_range_bar(label, low, high, current):
 
 
 if app_mode == "Stock Analysis":
-    st.title("AccleWealth")
+    st.title("AccelWealth")
     st.caption("Comprehensive analysis of NSE Indian Stocks")
     
     render_ticker_tape()
@@ -331,18 +382,18 @@ if app_mode == "Stock Analysis":
                         st.code(traceback.format_exc())
                         st.stop()
                         
-                    st.markdown(f"<h2 class='slide-up'>{selected} ({symbol})</h2>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='glass-panel slide-up'><h2 style='margin:0;'>{selected} ({symbol})</h2></div>", unsafe_allow_html=True)
                     
                     # Decision Banner
                     decision = result["decision"]
                     confidence = result.get("confidence", 50)
                         
                     if decision == "BUY":
-                        st.success(f"Action Reccomendation: BUY ({confidence}% confidence)")
+                        st.markdown(f"<div class='glass-success'>Action Recommendation: BUY ({confidence}% confidence)</div>", unsafe_allow_html=True)
                     elif decision == "SELL":
-                        st.error(f"Action Reccomendation: SELL ({confidence}% confidence)")
+                        st.markdown(f"<div class='glass-warning'>Action Recommendation: SELL ({confidence}% confidence)</div>", unsafe_allow_html=True)
                     else:
-                        st.warning(f"Action Reccomendation: HOLD ({confidence}% confidence)")
+                        st.markdown(f"<div class='glass-panel'>Action Recommendation: HOLD ({confidence}% confidence)</div>", unsafe_allow_html=True)
 
                     # Core Metrics Row (Animated)
                     col1, col2, col3, col4 = st.columns(4)
@@ -358,7 +409,7 @@ if app_mode == "Stock Analysis":
                         # --- TAB 1: OVERVIEW ---
                         with tab1:
                             st.subheader("AI Insight")
-                            st.info(result["reason"])
+                            st.markdown(f"<div class='glass-panel'>{result['reason']}</div>", unsafe_allow_html=True)
                             
                             st.subheader("Price Action")
                             fig_price = build_price_chart(result.get("data"))
@@ -448,114 +499,155 @@ if app_mode == "Stock Analysis":
                         st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.warning("No matching stocks found. Try a different name.")
+    else:
+        render_temp_performance_dashboard()
 
-elif app_mode == "Portfolio Dashboard":
-    st.title("Portfolio Dashboard")
-    st.caption("Analyze your holdings for diversification and risk management")
+elif app_mode == "AccelWealth (Portfolio)":
+    st.title("AccelWealth")
+    st.caption("Disciplined investing through automation, risk control, and behavioral guardrails.")
     
-    # Initialize session state for mock portfolio based on user prompt criteria
     if "portfolio" not in st.session_state:
-        st.session_state.portfolio = [
-            {"Company": "Torrent Power", "Symbol": "TORNTPOWER.NS", "Quantity": 30},
-            {"Company": "Inox Wind", "Symbol": "INOXWIND.NS", "Quantity": 30},
-            {"Company": "JSW Energy", "Symbol": "JSWENERGY.NS", "Quantity": 40},
-        ]
-    
-    st.subheader("Your Holdings")
-    
-    # Simple form to add new stocks
-    with st.expander("Add Stock to Portfolio", expanded=False):
-        c1, c2, c3 = st.columns([3, 1, 1])
-        with c1:
-            query_port = st.text_input("Search Company", key="port_search")
-        with c2:
-            qty = st.number_input("Quantity", min_value=1, value=10, key="port_qty")
-        with c3:
-            st.write("") # spacer
-            st.write("")
-            add_btn = st.button("Add", use_container_width=True)
+        st.session_state.portfolio = []
+        
+    if "onboarding_done" not in st.session_state:
+        st.session_state.onboarding_done = False
+        
+    if not st.session_state.onboarding_done:
+        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
+        st.subheader("Investor Profile Setup")
+        st.write("Let's set up your strict, rule-based portfolio engine.")
+        
+        with st.form("onboarding_form"):
+            investable_amount = st.number_input("Monthly Investable Amount (INR)", min_value=1000, value=10000, step=1000)
+            risk_tolerance = st.selectbox("Risk Tolerance", ["Low", "Medium", "High"])
+            horizon = st.selectbox("Investment Horizon", ["Short (<3y)", "Medium (3-7y)", "Long (>7y)"])
             
-        if add_btn and query_port:
-            res = search_stock(query_port)
-            if res:
-                c_name = list(res.keys())[0]
-                c_sym = res[c_name]
-                st.session_state.portfolio.append({"Company": c_name, "Symbol": c_sym, "Quantity": qty})
-                st.success(f"Added {qty} units of {c_name}")
+            submit = st.form_submit_button("Initialize AccelWealth Engine", type="primary")
+            if submit:
+                st.session_state.profile = {
+                    "amount": investable_amount,
+                    "risk": risk_tolerance,
+                    "horizon": horizon
+                }
+                st.session_state.onboarding_done = True
                 st.rerun()
-            else:
-                st.error("Stock not found.")
-
-    # Data Editor for the portfolio
-    df_port = pd.DataFrame(st.session_state.portfolio)
-    edited_df = st.data_editor(
-        df_port, 
-        num_rows="dynamic",
-        use_container_width=True,
-        hide_index=True
-    )
-    st.session_state.portfolio = edited_df.to_dict('records')
-    
-    if st.button("Run Portfolio Analysis", type="primary"):
-        with st.spinner("Analyzing portfolio holdings..."):
-            port_input = [{"name": r["Company"], "symbol": r["Symbol"], "quantity": r["Quantity"]} for r in st.session_state.portfolio if r.get("Symbol")]
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        # Display the Main Dashboard
+        alloc = calculate_allocation(
+            st.session_state.profile["amount"],
+            st.session_state.profile["risk"],
+            st.session_state.profile["horizon"]
+        )
+        
+        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
+        st.subheader("Target Allocation Strategy")
+        c1, c2 = st.columns(2)
+        c1.metric("Index Exposure (Nifty 50)", f"{alloc['Index Exposure (Nifty 50)']}%", f"INR {alloc['Index Amount']:,.0f} / mo")
+        c2.metric("Curated Stock Basket", f"{alloc['Curated Stock Basket']}%", f"INR {alloc['Stock Amount']:,.0f} / mo")
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Add Stocks Section
+        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
+        st.subheader("Manage Holdings (Curated Nifty 200 Universe)")
+        
+        nifty200 = filter_nifty200()
+        n200_symbols = [f"{s['Company Name']} ({s['Symbol']})" for s in nifty200]
+        
+        with st.expander("Add New Position", expanded=False):
+            colA, colB, colC = st.columns([3, 1, 1])
+            with colA:
+                selected_stock = st.selectbox("Select Valid Nifty 200 Stock", [""] + n200_symbols)
+            with colB:
+                qty = st.number_input("Quantity", min_value=1, value=10, key="aw_qty")
+            with colC:
+                avg_p = st.number_input("Avg Price", min_value=1.0, value=100.0, key="aw_avgp")
             
-            if not port_input:
-                st.warning("Your portfolio is empty.")
-            else:
-                analysis = analyze_portfolio(port_input)
+            if st.button("Add to Engine", type="primary") and selected_stock:
+                symbol = selected_stock.split("(")[-1].strip(")")
+                # Mock current price for demo as 95% of avg or random
+                st.session_state.portfolio.append({
+                    "Symbol": symbol, 
+                    "Quantity": qty, 
+                    "avg_price": avg_p,
+                    "current_price": avg_p * 0.98, # mock value
+                    "dma_200": avg_p * 0.95 # mock value
+                })
+                st.success(f"Added {qty} units of {symbol}")
+                st.rerun()
                 
-                # Top metrics
-                st.markdown("<div class='slide-up'>", unsafe_allow_html=True)
-                tc1, tc2 = st.columns(2)
-                tc1.metric("Total Portfolio Value", f"INR {analysis['total_value']:,.2f}")
-                tc2.metric("Total Holdings", len(analysis['stocks']))
+        # Editable Data Grid
+        df_port = pd.DataFrame(st.session_state.portfolio)
+        if not df_port.empty:
+            df_port = df_port[["Symbol", "Quantity", "avg_price", "current_price", "dma_200"]]
+            edited_df = st.data_editor(
+                df_port, 
+                num_rows="dynamic",
+                use_container_width=True,
+                hide_index=True
+            )
+            st.session_state.portfolio = edited_df.to_dict('records')
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        if st.session_state.portfolio:
+            port_input = []
+            total_val = 0.0
+            for r in st.session_state.portfolio:
+                if "Symbol" in r and r["Symbol"]:
+                    qty_val = float(r.get("Quantity", 0.0))
+                    price_val = float(r.get("current_price", 0.0))
+                    val = qty_val * price_val
+                    total_val += val
+                    port_input.append(r)
+            
+            if total_val > 0:
+                st.markdown("<h3 style='margin-top: 10px;'>System Diagnostics</h3>", unsafe_allow_html=True)
                 
-                tabP1, tabP2 = st.tabs(["Diversification Analysis", "Holding Details"])
+                # Run Logic
+                sizing_alerts = evaluate_position_sizing(port_input, total_val)
+                risk_data = evaluate_risk_control(port_input, total_val)
                 
-                with tabP1:
-                    sc1, sc2 = st.columns([1, 1])
-                    with sc1:
-                        st.subheader("Sector Allocation")
-                        sec_alloc = analysis["sector_allocation"]
-                        if sec_alloc and px is not None:
-                            df_pie = pd.DataFrame(list(sec_alloc.items()), columns=["Sector", "Allocation Pct"])
-                            fig_pie = px.pie(df_pie, names="Sector", values="Allocation Pct", hole=0.4)
-                            fig_pie.update_layout(
-                                plot_bgcolor="#0d1117", paper_bgcolor="#0d1117", font_color="#c9d1d9",
-                                margin=dict(t=20, b=20, l=20, r=20)
-                            )
-                            st.plotly_chart(fig_pie, use_container_width=True)
-                        elif not px:
-                            st.write(sec_alloc)
-                    
-                    with sc2:
-                        st.subheader("Strategic Insights")
-                        if analysis["warnings"]:
-                            for w in analysis["warnings"]:
-                                st.error(str(w))
+                # Portfolio Level Stats
+                port_drawdown = risk_data["portfolio_drawdown"]
+                
+                metric_col1, metric_col2 = st.columns(2)
+                metric_col1.metric("Stock Portfolio Value", f"INR {total_val:,.2f}")
+                metric_col2.metric("Aggregate Drawdown", f"{port_drawdown:.1f}%")
+                
+                if risk_data["portfolio_alerts"]:
+                    for al in risk_data["portfolio_alerts"]:
+                        st.markdown(f"<div class='glass-warning'>[CRITICAL] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
                         
-                        if analysis["suggestions"]:
-                            for s in analysis["suggestions"]:
-                                st.info(str(s))
+                for al in sizing_alerts:
+                    if al['type'] in ['WARNING', 'BLOCKED']:
+                        st.markdown(f"<div class='glass-warning'>⚠️ {al['message']} (Symbol: {al['symbol']})<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
+                
+                st.markdown("### Position Matrix", unsafe_allow_html=True)
+                for item in port_input:
+                    sym = item["Symbol"]
+                    risk_m = item.get("risk_metrics", {})
+                    exit_alerts = evaluate_exit_strategy(item)
+                    
+                    st.markdown(f"#### {sym}")
+                    st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
+                    
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Drawdown", f"{risk_m.get('drawdown', 0):.1f}%")
+                    c2.metric("Normal Downside", f"INR {risk_m.get('normal_downside', 0):.2f}")
+                    c3.metric("Crisis Downside", f"INR {risk_m.get('crisis_downside', 0):.2f}")
+                    
+                    pos_alerts_for_this = [a for a in risk_data["position_alerts"] if a["symbol"] == sym]
+                    
+                    if not pos_alerts_for_this and not exit_alerts:
+                        st.markdown("<div class='glass-success'>[OK] Position within standard parameters. HOLD.</div>", unsafe_allow_html=True)
+                    else:
+                        for al in pos_alerts_for_this:
+                            st.markdown(f"<div class='glass-warning'>[ALERT] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
+                        for al in exit_alerts:
+                            if "WINNER" in al['type']:
+                                st.markdown(f"<div class='glass-success'>[PROGRESS] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"<div class='glass-warning'>⚠️ {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
                                 
-                        if not analysis["warnings"] and not analysis["suggestions"]:
-                            st.success("Your portfolio looks well diversified!")
-                            
-                with tabP2:
-                    st.subheader("Individual Metrics")
-                    for s in analysis["stocks"]:
-                        with st.expander(f"{s['name']}  -  Weight: {s['weight']:.1f}%", expanded=False):
-                            rc1, rc2, rc3 = st.columns(3)
-                            rc1.metric("Current Price", f"INR {s['price']:,.2f}" if s['price'] else "N/A")
-                            rc2.metric("Total Value", f"INR {s['value']:,.2f}")
-                            rc3.metric("Broad Sector", s['broad_sector'])
-                            
-                            rc4, rc5, rc6 = st.columns(3)
-                            pe = s.get("pe_ratio")
-                            rc4.metric("PE Ratio", f"{pe:.1f}" if pe else "N/A")
-                            dte = s.get("debt_to_equity")
-                            rc5.metric("Debt to Equity", f"{dte:.1f}%" if dte else "N/A")
-                            div = s.get("dividend_yield")
-                            rc6.metric("Div Yield", f"{div*100:.2f}%" if div else "N/A")
-                st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+
