@@ -589,7 +589,6 @@ elif app_mode == "AccelWealth (Portfolio)":
         st.session_state.onboarding_done = False
         
     if not st.session_state.onboarding_done:
-        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
         st.subheader("Investor Profile Setup")
         st.write("Let's set up your strict, rule-based portfolio engine.")
         
@@ -607,7 +606,6 @@ elif app_mode == "AccelWealth (Portfolio)":
                 }
                 st.session_state.onboarding_done = True
                 st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
     else:
         # Display the Main Dashboard
         alloc = calculate_allocation(
@@ -616,15 +614,28 @@ elif app_mode == "AccelWealth (Portfolio)":
             st.session_state.profile["horizon"]
         )
         
-        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
         st.subheader("Target Allocation Strategy")
-        c1, c2 = st.columns(2)
-        c1.metric("Index Exposure (Nifty 50)", f"{alloc['Index Exposure (Nifty 50)']}%", f"INR {alloc['Index Amount']:,.0f} / mo")
-        c2.metric("Curated Stock Basket", f"{alloc['Curated Stock Basket']}%", f"INR {alloc['Stock Amount']:,.0f} / mo")
-        st.markdown("</div>", unsafe_allow_html=True)
+        alloc_html = f"""
+        <div class='glass-panel' style='padding: 24px; display: flex; justify-content: space-around; flex-wrap: wrap; margin-bottom: 30px;'>
+            <div style='text-align: center;'>
+                <p style='color: #8b949e; font-size: 0.95rem; margin-bottom: 5px; font-weight: 500;'>Index Exposure (Nifty 50)</p>
+                <div style='display: flex; align-items: baseline; justify-content: center; gap: 10px;'>
+                    <h2 style='margin: 0; font-size: 2.2rem; color: #f0f6fc; font-weight: 700;'>{alloc['Index Exposure (Nifty 50)']}%</h2>
+                    <span style='color: #3fb950; font-weight: 600; font-size: 1.1rem;'>INR {alloc['Index Amount']:,.0f} / mo</span>
+                </div>
+            </div>
+            <div style='text-align: center;'>
+                <p style='color: #8b949e; font-size: 0.95rem; margin-bottom: 5px; font-weight: 500;'>Curated Stock Basket</p>
+                <div style='display: flex; align-items: baseline; justify-content: center; gap: 10px;'>
+                    <h2 style='margin: 0; font-size: 2.2rem; color: #f0f6fc; font-weight: 700;'>{alloc['Curated Stock Basket']}%</h2>
+                    <span style='color: #58a6ff; font-weight: 600; font-size: 1.1rem;'>INR {alloc['Stock Amount']:,.0f} / mo</span>
+                </div>
+            </div>
+        </div>
+        """
+        st.markdown(alloc_html, unsafe_allow_html=True)
         
         # Add Stocks Section
-        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
         st.subheader("Manage Holdings (Curated Nifty 200 Universe)")
         
         nifty200 = filter_nifty200()
@@ -663,7 +674,6 @@ elif app_mode == "AccelWealth (Portfolio)":
                 hide_index=True
             )
             st.session_state.portfolio = edited_df.to_dict('records')
-        st.markdown("</div>", unsafe_allow_html=True)
         
         if st.session_state.portfolio:
             port_input = []
