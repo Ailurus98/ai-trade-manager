@@ -705,7 +705,6 @@ elif app_mode == "AccelWealth (Portfolio)":
                     exit_alerts = evaluate_exit_strategy(item)
                     
                     st.markdown(f"#### {sym}")
-                    st.markdown(f"#### {sym}")
                     
                     html_metrics = f"""
                     <div class='glass-panel' style='padding: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px;'>
