@@ -49,11 +49,24 @@ html, body, [class*="css"] {
 }
 
 /* Apple Liquid Glass Styling */
+.stApp {
+    background: linear-gradient(-45deg, #0d1117, #161b22, #0d1117, #1a222c);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 .glass-panel {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 24px;
@@ -253,7 +266,12 @@ if st.sidebar.button("Reset Engine Profile", type="secondary"):
     if "onboarding_done" in st.session_state:
         st.session_state.onboarding_done = False
     if "portfolio" in st.session_state:
-        st.session_state.portfolio = []
+        st.session_state.portfolio = [
+            {"Symbol": "TCS.NS", "Quantity": 20, "avg_price": 3800.0, "current_price": 4050.0, "dma_200": 3900.0},
+            {"Symbol": "HDFCBANK.NS", "Quantity": 50, "avg_price": 1600.0, "current_price": 1450.0, "dma_200": 1500.0},
+            {"Symbol": "RELIANCE.NS", "Quantity": 15, "avg_price": 2700.0, "current_price": 2950.0, "dma_200": 2600.0},
+            {"Symbol": "INFY.NS", "Quantity": 30, "avg_price": 1650.0, "current_price": 1400.0, "dma_200": 1500.0}
+        ]
     st.rerun()
 
 
@@ -500,14 +518,19 @@ if app_mode == "Stock Analysis":
         else:
             st.warning("No matching stocks found. Try a different name.")
     else:
-        render_temp_performance_dashboard()
+        st.markdown("<div class='glass-panel' style='text-align: center;'><h3>Welcome to AccleWealth Stock Analysis</h3><p>Search for a stock above to view detailed AI-driven insights, financials, and news.</p></div>", unsafe_allow_html=True)
 
 elif app_mode == "AccelWealth (Portfolio)":
     st.title("AccelWealth")
     st.caption("Disciplined investing through automation, risk control, and behavioral guardrails.")
     
     if "portfolio" not in st.session_state:
-        st.session_state.portfolio = []
+        st.session_state.portfolio = [
+            {"Symbol": "TCS.NS", "Quantity": 20, "avg_price": 3800.0, "current_price": 4050.0, "dma_200": 3900.0},
+            {"Symbol": "HDFCBANK.NS", "Quantity": 50, "avg_price": 1600.0, "current_price": 1450.0, "dma_200": 1500.0},
+            {"Symbol": "RELIANCE.NS", "Quantity": 15, "avg_price": 2700.0, "current_price": 2950.0, "dma_200": 2600.0},
+            {"Symbol": "INFY.NS", "Quantity": 30, "avg_price": 1650.0, "current_price": 1400.0, "dma_200": 1500.0}
+        ]
         
     if "onboarding_done" not in st.session_state:
         st.session_state.onboarding_done = False
