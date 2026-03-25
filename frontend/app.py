@@ -54,6 +54,24 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.5px;
 }
 
+/* Gradient Text Fixes */
+.gradient-text-blue {
+    background: linear-gradient(-45deg, #58a6ff 0%, #8b949e 100%);
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    color: transparent !important;
+    display: inline-block;
+}
+.gradient-text-green {
+    background: linear-gradient(45deg, #00C9FF 0%, #92FE9D 100%);
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    color: transparent !important;
+    display: inline-block;
+}
+
 /* Apple Liquid Glass Styling */
 .stApp {
     background: linear-gradient(-45deg, #0d1117, #161b22, #0d1117, #1a222c);
@@ -372,7 +390,7 @@ def render_range_bar(label, low, high, current):
 if app_mode == "Stock Analysis":
     st.markdown("""
     <div style="text-align: center; margin-bottom: 25px; animation: slideUp 0.8s ease-out;">
-        <h1 style="font-size: 3.5rem; font-weight: 800; background: -webkit-linear-gradient(-45deg, #58a6ff 0%, #8b949e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0px; padding-bottom: 10px;">AccelWealth Analysis</h1>
+        <h1 class="gradient-text-blue" style="font-size: 3.5rem; font-weight: 800; margin-bottom: 0px; padding-bottom: 10px;">AccelWealth Analysis</h1>
         <p style="color: #8b949e; font-size: 1.1rem; font-weight: 400; margin-top: -10px;">Comprehensive AI-driven insights for NSE Indian Stocks</p>
     </div>
     """, unsafe_allow_html=True)
@@ -533,7 +551,7 @@ if app_mode == "Stock Analysis":
 elif app_mode == "AccelWealth (Portfolio)":
     st.markdown("""
     <div style="text-align: center; margin-top: 20px; margin-bottom: 40px; animation: slideUp 0.8s ease-out;">
-        <h1 style="font-size: 4.5rem; font-weight: 800; background: -webkit-linear-gradient(45deg, #00C9FF 0%, #92FE9D 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0; padding-bottom: 5px; line-height: 1.1;">AccelWealth</h1>
+        <h1 class="gradient-text-green" style="font-size: 4.5rem; font-weight: 800; margin-bottom: 0; padding-bottom: 5px; line-height: 1.1;">AccelWealth</h1>
         <p style="color: #c9d1d9; font-size: 1.25rem; font-family: 'Inter', sans-serif; font-weight: 400; letter-spacing: 0.2px; margin-top: 5px;">Disciplined investing through automation, risk control, and behavioral guardrails.</p>
     </div>
     """, unsafe_allow_html=True)
