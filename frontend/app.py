@@ -705,25 +705,37 @@ elif app_mode == "AccelWealth (Portfolio)":
                     exit_alerts = evaluate_exit_strategy(item)
                     
                     st.markdown(f"#### {sym}")
-                    st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
+                    st.markdown(f"#### {sym}")
                     
-                    c1, c2, c3 = st.columns(3)
-                    c1.metric("Drawdown", f"{risk_m.get('drawdown', 0):.1f}%")
-                    c2.metric("Normal Downside", f"INR {risk_m.get('normal_downside', 0):.2f}")
-                    c3.metric("Crisis Downside", f"INR {risk_m.get('crisis_downside', 0):.2f}")
+                    html_metrics = f"""
+                    <div class='glass-panel' style='padding: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px;'>
+                        <div style='flex: 1; text-align: left;'>
+                            <p style='color: #8b949e; font-size: 0.9rem; margin-bottom: 5px; font-weight: 500;'>Drawdown</p>
+                            <h3 style='margin-top: 0; font-size: 2rem; color: #f0f6fc; font-weight: 600;'>{risk_m.get('drawdown', 0):.1f}%</h3>
+                        </div>
+                        <div style='flex: 1; text-align: left;'>
+                            <p style='color: #8b949e; font-size: 0.9rem; margin-bottom: 5px; font-weight: 500;'>Normal Downside</p>
+                            <h3 style='margin-top: 0; font-size: 2rem; color: #f0f6fc; font-weight: 600;'>INR {risk_m.get('normal_downside', 0):,.2f}</h3>
+                        </div>
+                        <div style='flex: 1; text-align: left;'>
+                            <p style='color: #8b949e; font-size: 0.9rem; margin-bottom: 5px; font-weight: 500;'>Crisis Downside</p>
+                            <h3 style='margin-top: 0; font-size: 2rem; color: #f0f6fc; font-weight: 600;'>INR {risk_m.get('crisis_downside', 0):,.2f}</h3>
+                        </div>
+                    </div>
+                    """
+                    st.markdown(html_metrics, unsafe_allow_html=True)
                     
                     pos_alerts_for_this = [a for a in risk_data["position_alerts"] if a["symbol"] == sym]
                     
                     if not pos_alerts_for_this and not exit_alerts:
-                        st.markdown("<div class='glass-success'>[OK] Position within standard parameters. HOLD.</div>", unsafe_allow_html=True)
+                        st.markdown("<div class='glass-success' style='margin-bottom: 30px;'>[OK] Position within standard parameters. HOLD.</div>", unsafe_allow_html=True)
                     else:
                         for al in pos_alerts_for_this:
-                            st.markdown(f"<div class='glass-warning'>[ALERT] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='glass-warning' style='margin-bottom: 10px;'>[ALERT] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
                         for al in exit_alerts:
                             if "WINNER" in al['type']:
-                                st.markdown(f"<div class='glass-success'>[PROGRESS] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='glass-success' style='margin-bottom: 10px;'>[PROGRESS] {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
                             else:
-                                st.markdown(f"<div class='glass-warning'>⚠️ {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
-                                
-                    st.markdown("</div>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='glass-warning' style='margin-bottom: 10px;'>⚠️ {al['message']}<br/><b>ACTION:</b> {al['action']}</div>", unsafe_allow_html=True)
+                        st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
 
